@@ -1,14 +1,8 @@
 COMP 472 Mini Project 1 Reflection
 
 Team Members
-1. Name: ____________________   Student ID: ____________________
-2. Name: ____________________   Student ID: ____________________
-3. Name: ____________________   Student ID: ____________________
-
-Contributions
-- Team member 1: Worked on ____________________.
-- Team member 2: Worked on ____________________.
-- Team member 3: Worked on ____________________.
+1. Zachary Corber (40246724)
+2. Khalil Al Labban (40282892)
 
 Difficulties Faced and How We Overcame Them
 One difficulty was understanding sentence embeddings and how semantic search differs from keyword search. We overcame this by testing different student questions and checking whether the assistant retrieved the closest answer from the knowledge base.
