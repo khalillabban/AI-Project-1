@@ -1,0 +1,15 @@
+Welcome to Student Support AI
+Type 'quit' to exit.
+You: I cannot access my account and this is terrible
+Sentiment: NEGATIVE (0.99)
+Recommended escalation: Contact human advisor.
+Answer: Try resetting your password through the IT portal. If the issue continues, contact technical support for account recovery.
+Matched knowledge-base question: What should I do if I cannot access my account?
+Semantic similarity: 0.78
+You: Where is the registrar office?
+Sentiment: NEUTRAL (0.98)
+Answer: The registrar office is located in Building A room 210. Check the student portal for current service hours.
+Matched knowledge-base question: Where is the registrar office?
+Semantic similarity: 1.00
+You: quit
+Goodbye!

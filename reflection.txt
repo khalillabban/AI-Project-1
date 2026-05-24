@@ -1,0 +1,28 @@
+COMP 472 Mini Project 1 Reflection
+
+Team Members
+1. Name: ____________________   Student ID: ____________________
+2. Name: ____________________   Student ID: ____________________
+3. Name: ____________________   Student ID: ____________________
+
+Contributions
+- Team member 1: Worked on ____________________.
+- Team member 2: Worked on ____________________.
+- Team member 3: Worked on ____________________.
+
+Difficulties Faced and How We Overcame Them
+One difficulty was understanding sentence embeddings and how semantic search differs from keyword search. We overcame this by testing different student questions and checking whether the assistant retrieved the closest answer from the knowledge base.
+
+Another difficulty was setting up the required Python libraries. We solved this by creating a requirements.txt file and using a virtual environment.
+
+Time Spent
+- Understanding embeddings: ____ hour(s)
+- Environment setup: ____ hour(s)
+- Python coding and structure: ____ hour(s)
+- Semantic search implementation: ____ hour(s)
+- Sentiment analysis implementation: ____ hour(s)
+- Conversation loop: ____ hour(s)
+- Testing and debugging: ____ hour(s)
+
+What We Learned
+We learned how to combine NLP, embeddings, semantic similarity, sentiment analysis, and basic Python software engineering to build a small AI-powered support assistant.
