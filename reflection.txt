@@ -3,26 +3,74 @@ COMP 472 Mini Project 1 Reflection
 Team Members and Contributions:
 
 1. Zachary Corber (40246724)
-    - Project setup and environment
-    - Embedding model integration
-    - Embedding persistence and caching
-    - Semantic retrieval logic
-    - Escalation policy and heuristics
-    - Conversation logging and metrics
-    - Documentation
-    - Testing and validation
+
+   * Project setup and environment
+   * Embedding model integration
+   * Embedding persistence and caching
+   * Semantic retrieval logic
+   * Escalation policy and heuristics
+   * Conversation logging and metrics
+   * Documentation
+   * Testing and validation
+
+I contributed mainly to the semantic search and embedding generation components of the project. I helped research how sentence embeddings work and how they can be used to compare the meaning of different questions, even when the wording is not exactly the same. I worked on integrating the SentenceTransformer model into the program and generating embeddings for all questions loaded from the knowledge base. This allowed the assistant to represent each stored question as a numerical vector that could later be compared with the user’s input.
+
+I also helped implement the retrieval logic used by the assistant. This included converting the user’s question into an embedding, comparing it against the stored question embeddings using cosine similarity, identifying the closest matching question, and returning the corresponding answer from the knowledge base. I helped test the semantic search with direct questions, reworded questions, and partially related inputs to make sure the assistant retrieved the most relevant answer instead of relying only on exact keyword matching.
+
+In addition, I contributed to code quality, testing, and debugging. I helped organize the program into clear functions so that the main components, such as loading the knowledge base, generating embeddings, performing semantic search, analyzing sentiment, and running the chat loop, were easier to understand and explain. I also helped test edge cases, such as empty input, missing or incorrectly formatted CSV files, and the quit command. My work helped make the final program more reliable, readable, and easier to demonstrate.
 
 2. Khalil Al Labban (40282892)
-    - Knowledge_base creation
-    - CSV loading and validation
-    - Embedding normalization
-    - Sentiment analysis integration
-    - Chat, CLI and ouput formatting
-    - Documentation
-    - Testing and validation
 
+   * Knowledge base creation
+   * CSV loading and validation
+   * Embedding normalization
+   * Sentiment analysis integration
+   * Chat, CLI, and output formatting
+   * Documentation
+   * Testing and validation
+
+I contributed to the construction and organization of the project’s knowledge base, including creating and expanding the knowledge_base.csv file with common student support questions and their corresponding answers. I worked on making sure the CSV file followed the required question,answer structure so that it could be loaded properly by the program. I also helped implement and validate the CSV loading logic using pandas, including checking that the file exists, confirming that the required columns are present, removing incomplete rows, and storing the questions and answers in lists for later use by the assistant.
+
+I also contributed to the sentiment analysis portion of the assistant. This included integrating the Hugging Face transformers sentiment-analysis pipeline, choosing an appropriate sentiment analysis model, extracting the predicted label and confidence score, and formatting the output so that the user can clearly see whether the input was classified as positive, neutral, or negative. I also helped connect the sentiment result to the escalation logic, where strongly negative messages with high confidence cause the program to recommend contacting a human advisor.
+
+In addition, I worked on the interactive chat and command-line interface formatting. I helped ensure that the assistant continuously accepts user input, exits when the user types quit, handles empty input properly, and displays the answer, matched knowledge-base question, semantic similarity score, and sentiment information in a readable format. I also contributed to testing the assistant using different types of questions, including direct matches, misspelled queries, negative or frustrated messages, and unrelated inputs, to confirm that the chatbot behaved correctly in multiple situations.
+
+I also contributed to documentation and final validation. I helped prepare the project files required for submission, including the knowledge base, sample execution output, reflection content, and general project documentation. I reviewed the project against the assignment requirements to make sure the program included dataset loading, embedding generation, semantic search, sentiment analysis, escalation logic, an interactive conversation loop, and basic error handling.
 
 Difficulties Faced and How We Overcame Them:
 
+One difficulty we faced was understanding how sentence embeddings work and how they are different from simple keyword matching. At first, it was not immediately obvious how a user question could be converted into a numerical vector and compared to stored questions. We overcame this by researching the purpose of embeddings and then using the SentenceTransformer library to generate embeddings for all knowledge-base questions. Once the questions and user input were represented as vectors, we used cosine similarity to retrieve the most relevant stored question.
+
+Another difficulty was making the semantic search reliable for slightly different or misspelled user inputs. For example, a user might type a question that does not exactly match any question in the CSV file. We overcame this by comparing the user query embedding against every stored question embedding and selecting the question with the highest similarity score. This allowed the assistant to still return a useful answer even when the wording was not identical.
+
+We also had difficulty choosing and handling the sentiment analysis output. Different models may return labels in different formats, such as NEGATIVE, NEUTRAL, POSITIVE, or model-specific labels like LABEL_0, LABEL_1, and LABEL_2. We handled this by normalizing the sentiment labels inside the program so that the output would always be displayed clearly to the user. We also used the confidence score to avoid escalating every negative message and only recommend a human advisor when the negative sentiment was strong enough.
+
+Another issue was making the program easier to debug and explain during the demo. If the chatbot only returned an answer, it would be harder to show how the semantic search was working. To solve this, we displayed the matched knowledge-base question and semantic similarity score along with the final answer. This makes the retrieval process more transparent and helps show that the program is selecting the closest matching question from the knowledge base.
+
+We also had to manage environment setup and dependencies. Since the project uses several AI and machine learning libraries, including pandas, numpy, scikit-learn, sentence-transformers, transformers, and torch, we created a requirements.txt file to make installation easier and more consistent. This helped reduce setup problems and made the project easier to run on another machine.
+
+Actual Time Spent:
+
+Understanding the project requirements: approximately 1 hour
+Understanding sentence embeddings and semantic search: approximately 1.5 hours
+Environment setup and installing libraries: approximately 1 hour
+Creating and expanding the knowledge_base.csv file: approximately 1 hour
+Implementing CSV loading and validation: approximately 1 hour
+Implementing embedding generation with SentenceTransformer: approximately 1 hour
+Implementing semantic similarity search with cosine similarity: approximately 1.5 hours
+Implementing sentiment analysis with the transformers pipeline: approximately 1.5 hours
+Implementing escalation logic for strongly negative sentiment: approximately 0.5 hours
+Building the interactive conversation loop: approximately 1 hour
+Formatting the command-line output and adding matched-question/similarity information: approximately 0.75 hours
+Testing direct matches, similar questions, misspelled questions, negative messages, and quit behavior: approximately 2 hours
+Writing documentation, sample output, and reflection content: approximately 1 hour
+
+Total actual time: approximately 14.75 hours
+
 What We Learned:
-We learned how to combine NLP, embeddings, semantic similarity, sentiment analysis, and basic Python software engineering to build a small AI-powered support assistant.
+
+Through this project, we learned how to combine several AI and Python programming concepts into one working application. We learned how a CSV file can be used as a small knowledge base, how pandas can load and validate structured data, and how sentence embeddings can represent the meaning of text in a way that allows semantic comparison. We also learned how cosine similarity can be used to find the closest stored question to a user’s input.
+
+We learned how sentiment analysis can be integrated into a chatbot to detect whether a user is positive, neutral, or negative. This helped us understand how AI systems can do more than simply answer questions; they can also react differently depending on the user’s emotional tone. The escalation logic showed how a simple rule can be added on top of a model’s output to make the assistant more useful in real support situations.
+
+Overall, this project showed us that a useful AI-powered support assistant can be built with relatively little code by using existing Python libraries and models. It also helped us practice basic software engineering skills such as modular functions, file handling, error handling, testing, documentation, and organizing a project for submission.
