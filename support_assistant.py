@@ -61,7 +61,7 @@ def load_knowledge_base():
 def generate_embeddings():
     global question_embeddings
 
-    # The model's `encode` returns a ndarray of shape (n_questions, dim).
+    #Encodes all the questions from the knowledge base into vector embeddings using the loaded embedding model. The resulting embeddings are stored in the global variable `question_embeddings` for later use during retrieval.
     question_embeddings = embedding_model.encode(questions) 
 
 
@@ -76,11 +76,10 @@ def retrieve_answer(user_query):
     #cosine_similarity computes the cosine similarity between the query embedding and each of the question embeddings, resulting in a list of similarity scores.
     similarities = cosine_similarity(query_embedding, question_embeddings)[0]
 
-    # argmax returns the index of the highest scoring KB question. We coerce
-    # to int for consistency and to avoid numpy types leaking out.
+    # argmax returns the index of the highest scoring KB question
     best_index = int(np.argmax(similarities))
 
-    # Gather the selected answer and metadata to return to the caller.
+    # Gather the selected answer and metadata to return to the caller
     answer = answers[best_index]
     similarity = float(similarities[best_index])
     matched_question = questions[best_index]
@@ -107,7 +106,7 @@ def analyze_sentiment(text):
 
 
 def should_escalate(label, confidence):
-    # Heuristic: escalate if negative sentiment is detected with high confidence.
+    # Heuristic: escalate if negative sentiment is detected with high confidence
     return label.upper() == "NEGATIVE" and confidence > 0.90
 
 
@@ -115,19 +114,19 @@ def answer_question(user_query):
     label, confidence = analyze_sentiment(user_query)
     answer, similarity, matched_question = retrieve_answer(user_query)
 
-    # Present sentiment info first so operators can notice worrying language.
+    # Present sentiment info first so operators can notice worrying language
     print(f"Sentiment: {label} ({confidence:.2f})")
 
     if should_escalate(label, confidence):
-        # A human-in-the-loop recommendation for strongly negative inputs.
+        # A human-in-the-loop recommendation for strongly negative inputs
         print("Recommended escalation: Contact human advisor.")
 
-    # Present the selected answer and helpful metadata for debugging.
+    # Present the selected answer and helpful metadata for debugging
     print(f"Answer: {answer}")
     print(f"Matched knowledge-base question: {matched_question}")
     print(f"Semantic similarity: {similarity:.2f}")
 
-    # Store the exchange in memory. Useful for offline analysis or replay.
+    # Store the exchange in memory. Useful for offline analysis or replay
     conversation_history.append((user_query, label, answer, confidence))
 
 
@@ -151,13 +150,10 @@ def chat():
             answer_question(user_query)
 
         except KeyboardInterrupt:
-            # Allow the user to exit cleanly with Ctrl-C.
             print("\nGoodbye!")
             break
 
         except Exception as error:
-            # Generic error handling so the REPL stays live. For debugging,
-            # catch and display the exception to the terminal.
             print(f"Error: {error}")
 
 

@@ -1,12 +1,28 @@
 COMP 472 Mini Project 1 Reflection
 
-Team Members
+Team Members and Contributions:
+
 1. Zachary Corber (40246724)
+    - Project setup and environment
+    - Embedding model integration
+    - Embedding persistence and caching
+    - Semantic retrieval logic
+    - Escalation policy and heuristics
+    - Conversation logging and metrics
+    - Documentation
+    - Testing and validation
+
 2. Khalil Al Labban (40282892)
+    - Knowledge_base creation
+    - CSV loading and validation
+    - Embedding normalization
+    - Sentiment analysis integration
+    - Chat, CLI and ouput formatting
+    - Documentation
+    - Testing and validation
+
 
 Difficulties Faced and How We Overcame Them:
-- One difficulty was understanding sentence embeddings and how semantic search differs from keyword search. We overcame this by testing different student questions and checking whether the assistant retrieved the closest answer from the knowledge base.
-- Another difficulty was setting up the required Python libraries. We solved this by creating a requirements.txt file and using a virtual environment.
 
 What We Learned:
 We learned how to combine NLP, embeddings, semantic similarity, sentiment analysis, and basic Python software engineering to build a small AI-powered support assistant.

@@ -9,7 +9,7 @@ COMP 472 Mini Project 1: Intelligent Support Assistant with Sentiment Analysis a
 - `requirements.txt`: required Python packages
 - `reflection.txt`: short reflection
 - `sample_run.txt`: example demo output
-- `program_execution_screenshot.png`: sample screenshot of execution
+- `program_execution.png`: sample screenshot of execution
 
 ## Setup
 
@@ -24,12 +24,6 @@ pip install -r requirements.txt
 
 ```bash
 python support_assistant.py
-```
-
-You can also provide a CSV path manually:
-
-```bash
-python support_assistant.py knowledge_base.csv
 ```
 
 Type `quit` to exit.
