@@ -7,12 +7,10 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from transformers import pipeline
 
-
 knowledge_base_path = "knowledge_base.csv"
 
-#Small and fast sentencer transformer model for generating embeddings
+#Small and fast sentence transformer model for generating embeddings
 embedding_model_name = "all-MiniLM-L6-v2"
-
 
 #Populated from knowledge_base.csv
 questions = []
@@ -25,7 +23,6 @@ conversation_history = []
 #Initialized in setup_assistant()
 embedding_model = None
 sentiment_analyzer = None
-
 
 def load_knowledge_base():
     global questions, answers
@@ -46,14 +43,13 @@ def load_knowledge_base():
     if "question" not in data.columns or "answer" not in data.columns:
         raise ValueError("CSV file must contain 'question' and 'answer' columns.")
 
-    # Remove rows where either question or answer is missing.
+    # Remove rows where either question or answer is missing. (Wont happen with the provided sample, but good for robustness if the file is edited later)
     data = data.dropna(subset=["question", "answer"])
 
-    # If the file contains no usable rows, raise error so the caller can handle it.
     if data.empty:
         raise ValueError("Knowledge base is empty. Add at least one question and answer.")
 
-    # Normalize to Python strings and save into module-global lists.
+    # Normalize to Python strings and save into module-global lists
     questions = data["question"].astype(str).tolist()
     answers = data["answer"].astype(str).tolist()
 
@@ -118,7 +114,6 @@ def answer_question(user_query):
     print(f"Sentiment: {label} ({confidence:.2f})")
 
     if should_escalate(label, confidence):
-        # A human-in-the-loop recommendation for strongly negative inputs
         print("Recommended escalation: Contact human advisor.")
 
     # Present the selected answer and helpful metadata for debugging
@@ -126,7 +121,7 @@ def answer_question(user_query):
     print(f"Matched knowledge-base question: {matched_question}")
     print(f"Semantic similarity: {similarity:.2f}")
 
-    # Store the exchange in memory. Useful for offline analysis or replay
+    # Store the exchange in memory
     conversation_history.append((user_query, label, answer, confidence))
 
 
@@ -143,7 +138,6 @@ def chat():
                 break
 
             if not user_query:
-                # Empty input: prompt user again without performing analysis.
                 print("Please enter a question or type 'quit' to exit.")
                 continue
 
@@ -170,7 +164,7 @@ def setup_assistant():
     model="cardiffnlp/twitter-roberta-base-sentiment-latest"
     )
 
-    # Pre-compute embeddings so retrieval is fast in the chat loop.
+    # Pre computes embeddings so retrieval is fast in the chat loop
     generate_embeddings()
 
 
