@@ -1,7 +1,5 @@
 import sys
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -10,206 +8,298 @@ from sklearn.metrics.pairwise import cosine_similarity
 from transformers import pipeline
 
 
-@dataclass
-class SupportAssistant:
-    """AI-powered student support assistant.
+knowledge_base_path = "knowledge_base.csv"
 
-    This class wraps a small retrieval+sentiment assistant using a sentence embedding
-    model (from sentence-transformers) for semantic search and a transformers
-    sentiment-analysis pipeline for simple sentiment detection.
+# Small, fast sentence-transformer model for generating embeddings. This
+# default works well for demo / small-scale semantic search tasks.
+embedding_model_name = "all-MiniLM-L6-v2"
 
-    Attributes:
-        knowledge_base_path: Path to a CSV file with 'question' and 'answer' columns.
-        embedding_model_name: Name of the sentence-transformers model used to embed text.
-        questions: Loaded questions from the knowledge base (keeps order with answers).
-        answers: Loaded answers from the knowledge base.
-        question_embeddings: NumPy array of embeddings (shape: num_questions x embedding_dim).
-        conversation_history: List of tuples (user_query, sentiment_label, answer, confidence).
+
+# Runtime state -----------------------------------------------------
+# Stored lists of knowledge-base entries. Populated by load_knowledge_base().
+questions = []
+answers = []
+
+# Numpy array of embeddings corresponding to `questions`. Populated by
+# generate_embeddings(). Kept as a global for simplicity.
+question_embeddings = None
+
+# Simple in-memory conversation log: list of tuples (user_query, sentiment_label,
+# answer_returned, sentiment_confidence). This is kept in RAM only and not
+# persisted anywhere by this script.
+conversation_history = []
+
+
+# Model handles (initialized in setup_assistant) ---------------------
+embedding_model = None
+sentiment_analyzer = None
+
+
+def load_knowledge_base():
+    """Load questions and answers from `knowledge_base_path` CSV.
+
+    Expects a CSV with at least two columns named 'question' and 'answer'.
+
+    Side-effects:
+    - Sets the module-level `questions` and `answers` lists.
+
+    Raises:
+    - FileNotFoundError: if the CSV path doesn't exist.
+    - ValueError: if required columns are missing or there's no data.
+
+    Why explicit validation: downstream code assumes a non-empty list of
+    strings (so we coerce to str and drop NaNs up-front).
     """
 
-    # Default configuration values are intentionally simple — easy to override in tests
-    knowledge_base_path: str = "knowledge_base.csv"
-    embedding_model_name: str = "all-MiniLM-L6-v2"
-    questions: List[str] = field(default_factory=list)
-    answers: List[str] = field(default_factory=list)
-    question_embeddings: np.ndarray | None = None
-    conversation_history: List[Tuple[str, str, str, float]] = field(default_factory=list)
+    global questions, answers
 
-    def __post_init__(self) -> None:
-        """Post-initialization: load KB, instantiate models, and precompute embeddings.
+    path = Path(knowledge_base_path)
 
-        Rationale: keep initialization simple so a caller who constructs the class
-        immediately has a ready-to-use assistant. This does mean heavy work (model
-        downloads/initialization) happens at construction time; in larger apps you
-        might prefer lazy-loading or dependency injection.
-        """
-        # Load CSV knowledge base into memory (questions/answers lists)
-        self.load_knowledge_base()
+    # Fail early with a clear message if the file is missing.
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Knowledge base file not found: {path}. "
+            "Make sure knowledge_base.csv is in the same folder as this script."
+        )
 
-        # Initialize the embedding model once and reuse it for all queries to save time
-        self.embedding_model = SentenceTransformer(self.embedding_model_name)
+    # Read the CSV using pandas. This lets users supply larger KBs easily.
+    data = pd.read_csv(path)
 
-        # Use transformers pipeline for sentiment analysis (convenient default). In
-        # production you should pin a model and set HF token for rate limits.
-        self.sentiment_analyzer = pipeline("sentiment-analysis")
+    # Ensure the CSV has the expected columns. This is a common user error.
+    if "question" not in data.columns or "answer" not in data.columns:
+        raise ValueError("CSV file must contain 'question' and 'answer' columns.")
 
-        # Precompute embeddings for the knowledge-base questions to make retrieval cheap
-        self.generate_embeddings()
+    # Remove rows where either question or answer is missing.
+    data = data.dropna(subset=["question", "answer"])
 
-    def load_knowledge_base(self) -> None:
-        """Load student questions and answers from a CSV file.
+    # If the file contains no usable rows, raise so caller can handle it.
+    if data.empty:
+        raise ValueError("Knowledge base is empty. Add at least one question and answer.")
 
-        The CSV must contain 'question' and 'answer' columns. Rows with missing
-        values in these columns are dropped. The function sets `self.questions`
-        and `self.answers` as parallel lists in the same order they appear in the file.
+    # Normalize to Python strings and save into module-global lists.
+    questions = data["question"].astype(str).tolist()
+    answers = data["answer"].astype(str).tolist()
 
-        Raises:
-            FileNotFoundError: if the file does not exist.
-            ValueError: if required columns are missing or the KB is empty after cleaning.
-        """
-        path = Path(self.knowledge_base_path)
-        if not path.exists():
-            raise FileNotFoundError(
-                f"Knowledge base file not found: {path}. "
-                "Make sure knowledge_base.csv is in the same folder as this script."
-            )
 
-        # Use pandas for robust CSV parsing (handles quoted fields, line endings, etc.)
-        data = pd.read_csv(path)
-        required_columns = {"question", "answer"}
-        if not required_columns.issubset(data.columns):
-            raise ValueError("CSV file must contain 'question' and 'answer' columns.")
+def generate_embeddings():
+    """Generate embeddings for all knowledge-base questions.
 
-        # Drop rows where either question or answer is missing — those are not useful
-        data = data.dropna(subset=["question", "answer"])
-        if data.empty:
-            raise ValueError("Knowledge base is empty. Add at least one question and answer.")
+    Side-effects:
+    - Sets the module-level `question_embeddings` (typically a numpy array).
 
-        # Convert to plain Python lists of strings for downstream processing
-        self.questions = data["question"].astype(str).tolist()
-        self.answers = data["answer"].astype(str).tolist()
+    Notes:
+    - This function relies on `embedding_model` being initialized (see
+      `setup_assistant`). If it's None, this will raise an AttributeError.
+    - We keep all embeddings in memory for fast similarity computation. For
+      large KBs consider batching, on-disk stores, or approximate nearest
+      neighbors (e.g., FAISS).
+    """
 
-    def generate_embeddings(self) -> None:
-        """Convert stored questions into sentence embeddings.
+    global question_embeddings
 
-        The model encodes the list of questions into a 2D NumPy array. We store the
-        embeddings so retrieval queries can compute similarity quickly without
-        re-encoding the KB each time.
-        """
-        # The SentenceTransformer.encode method returns a NumPy array by default
-        self.question_embeddings = self.embedding_model.encode(self.questions)
+    # The model's `encode` returns a ndarray of shape (n_questions, dim).
+    question_embeddings = embedding_model.encode(questions)
 
-    def retrieve_answer(self, user_query: str) -> Tuple[str, float, str]:
-        """Return the best-matching answer for a user query.
 
-        Args:
-            user_query: The user's free-text question.
+def retrieve_answer(user_query):
+    """Find the best-matching answer from the knowledge base for a query.
 
-        Returns:
-            A tuple of (answer, similarity_score, matched_question) where
-            similarity_score is the cosine similarity between query and matched question.
+    Args:
+        user_query (str): The raw user text to match.
 
-        Raises:
-            RuntimeError: if question embeddings have not been generated.
-        """
-        if self.question_embeddings is None:
-            raise RuntimeError("Question embeddings were not generated.")
+    Returns:
+        tuple(answer:str, similarity:float, matched_question:str)
 
-        # Encode the single query; result is shape (1, dim)
-        query_embedding = self.embedding_model.encode([user_query])
+    Raises:
+        RuntimeError: if embeddings haven't been generated yet.
 
-        # Cosine similarity between the query and all precomputed KB question embeddings
-        similarities = cosine_similarity(query_embedding, self.question_embeddings)[0]
+    Implementation details:
+    - Encode the single query with the same embedding model used for the KB.
+    - Compute cosine similarity between the query embedding and all stored
+      question embeddings.
+    - Choose the highest similarity as the best match.
 
-        # Choose the index with highest similarity
-        best_index = int(np.argmax(similarities))
+    Edge cases:
+    - If similarity is low, the returned answer may not actually address the
+      user's intent; this script prints the similarity so callers can decide
+      to re-ask or fallback to a human.
+    """
 
-        return self.answers[best_index], float(similarities[best_index]), self.questions[best_index]
+    if question_embeddings is None:
+        # The caller is expected to call generate_embeddings() during setup.
+        raise RuntimeError("Question embeddings were not generated.")
 
-    def analyze_sentiment(self, text: str) -> Tuple[str, float]:
-        """Detect sentiment label and confidence score for a piece of text.
+    # Encode the user's query into the same embedding space. encode(...) can
+    # accept a list of strings; we pass a single-element list and then use the
+    # first row of the result.
+    query_embedding = embedding_model.encode([user_query])
 
-        Args:
-            text: The input text to analyze.
+    # cosine_similarity accepts 2D arrays and returns a matrix. We want the
+    # similarity between the single query and every KB question, so we take
+    # the first row of the result.
+    similarities = cosine_similarity(query_embedding, question_embeddings)[0]
 
-        Returns:
-            A tuple (label, confidence) where label is the detected sentiment label
-            (e.g., 'POSITIVE' or 'NEGATIVE') and confidence is a float score in [0,1].
-        """
-        # The transformers pipeline returns a list of results even for a single input
-        result = self.sentiment_analyzer(text)[0]
-        label = str(result["label"])
-        confidence = float(result["score"])
-        return label, confidence
+    # argmax returns the index of the highest scoring KB question. We coerce
+    # to int for consistency and to avoid numpy types leaking out.
+    best_index = int(np.argmax(similarities))
 
-    @staticmethod
-    def should_escalate(label: str, confidence: float) -> bool:
-        """Decide whether to recommend escalation to a human.
+    # Gather the selected answer and metadata to return to the caller.
+    answer = answers[best_index]
+    similarity = float(similarities[best_index])
+    matched_question = questions[best_index]
 
-        Heuristic: escalate when sentiment is strongly negative (label is 'NEGATIVE'
-        and confidence is > 0.90). This is intentionally conservative to avoid
-        false positives.
-        """
-        return label.upper() == "NEGATIVE" and confidence > 0.90
+    return answer, similarity, matched_question
 
-    def answer_question(self, user_query: str) -> None:
-        """Full pipeline for answering a single user query.
 
-        Steps:
-        1. Analyze sentiment of the query.
-        2. Retrieve the most semantically similar KB answer.
-        3. Print the results and append the interaction to conversation history.
+def analyze_sentiment(text):
+    """Run a sentiment analysis model on the provided text.
 
-        Args:
-            user_query: Text of the user's question.
-        """
-        label, confidence = self.analyze_sentiment(user_query)
-        answer, similarity, matched_question = self.retrieve_answer(user_query)
+    Returns a tuple (label, confidence) where label is typically 'POSITIVE' or
+    'NEGATIVE' depending on the underlying transformers pipeline model, and
+    confidence is a float score between 0 and 1.
 
-        # Output: simple textual feedback for a CLI assistant
-        print(f"Sentiment: {label} ({confidence:.2f})")
-        if self.should_escalate(label, confidence):
-            print("Recommended escalation: Contact human advisor.")
-        print(f"Answer: {answer}")
-        print(f"Matched knowledge-base question: {matched_question}")
-        print(f"Semantic similarity: {similarity:.2f}")
+    The function expects `sentiment_analyzer` to be a `transformers` pipeline
+    initialized for sentiment analysis (see setup_assistant).
+    """
 
-        # Track the interaction for possible auditing or later use
-        self.conversation_history.append((user_query, label, answer, confidence))
+    result = sentiment_analyzer(text)[0]
 
-    def chat(self) -> None:
-        """Run the interactive conversation loop (CLI).
+    # The pipeline returns objects like {'label': 'POSITIVE', 'score': 0.99}
+    label = str(result["label"])
+    confidence = float(result["score"])
 
-        The loop reads user lines from stdin. Typing 'quit' (case-insensitive)
-        exits the loop. We handle KeyboardInterrupt to allow Ctrl-C graceful exit.
-        """
-        print("Welcome to Student Support AI")
-        print("Type 'quit' to exit.")
+    return label, confidence
 
-        while True:
-            try:
-                user_query = input("You: ").strip()
-                if user_query.lower() == "quit":
-                    print("Goodbye!")
-                    break
-                if not user_query:
-                    print("Please enter a question or type 'quit' to exit.")
-                    continue
-                self.answer_question(user_query)
-            except KeyboardInterrupt:
-                # Allow Ctrl-C to exit the chat loop cleanly
-                print("\nGoodbye!")
+
+def should_escalate(label, confidence):
+    """Simple heuristic: escalate when sentiment is NEGATIVE with high confidence.
+
+    This threshold is intentionally conservative (0.90) to avoid false
+    positives. Teams can tune the label and threshold depending on their
+    needs (e.g., add anger detection, profanity checks, or domain-specific
+    classifiers).
+    """
+
+    return label.upper() == "NEGATIVE" and confidence > 0.90
+
+
+def answer_question(user_query):
+    """High-level handler for processing a single user query.
+
+    Steps:
+    - Analyze sentiment of the raw user input.
+    - Retrieve the best KB answer via semantic search.
+    - Print the sentiment, recommended escalation (if any), the answer, the
+      matched KB question, and the similarity score.
+    - Append a record to `conversation_history` for potential later use.
+
+    This function performs printing directly (suitable for the provided REPL
+    `chat()`), but it could be refactored to return a serializable object
+    for use in other contexts (e.g., a web API) without printing.
+    """
+
+    label, confidence = analyze_sentiment(user_query)
+    answer, similarity, matched_question = retrieve_answer(user_query)
+
+    # Present sentiment info first so operators can notice worrying language.
+    print(f"Sentiment: {label} ({confidence:.2f})")
+
+    if should_escalate(label, confidence):
+        # A human-in-the-loop recommendation for strongly negative inputs.
+        print("Recommended escalation: Contact human advisor.")
+
+    # Present the selected answer and helpful metadata for debugging.
+    print(f"Answer: {answer}")
+    print(f"Matched knowledge-base question: {matched_question}")
+    print(f"Semantic similarity: {similarity:.2f}")
+
+    # Store the exchange in memory. Useful for offline analysis or replay.
+    conversation_history.append((user_query, label, answer, confidence))
+
+
+def chat():
+    """A simple REPL to interact with the assistant via the terminal.
+
+    The loop reads user input, allows 'quit' to exit, and delegates handling
+    to answer_question(). It also gracefully handles KeyboardInterrupt to let
+    users Ctrl-C out of the loop.
+    """
+
+    print("Welcome to Student Support AI")
+    print("Type 'quit' to exit.")
+
+    while True:
+        try:
+            user_query = input("You: ").strip()
+
+            if user_query.lower() == "quit":
+                print("Goodbye!")
                 break
-            except Exception as error:
-                # Catch-all to avoid crashing the REPL; in production log this instead
-                print(f"Error: {error}")
+
+            if not user_query:
+                # Empty input: prompt user again without performing analysis.
+                print("Please enter a question or type 'quit' to exit.")
+                continue
+
+            answer_question(user_query)
+
+        except KeyboardInterrupt:
+            # Allow the user to exit cleanly with Ctrl-C.
+            print("\nGoodbye!")
+            break
+
+        except Exception as error:
+            # Generic error handling so the REPL stays live. For debugging,
+            # catch and display the exception to the terminal.
+            print(f"Error: {error}")
 
 
-def main() -> None:
-    """Create and run the assistant."""
-    kb_path = sys.argv[1] if len(sys.argv) > 1 else "knowledge_base.csv"
-    assistant = SupportAssistant(knowledge_base_path=kb_path)
-    assistant.chat()
+def setup_assistant():
+    """Prepare models and embeddings before starting interaction.
+
+    Actions performed:
+    - Loads the knowledge base CSV into memory.
+    - Initializes the SentenceTransformer used for embeddings.
+    - Initializes a transformers sentiment-analysis pipeline.
+    - Generates embeddings for all KB questions.
+
+    This is separated from `main()` to keep initialization logic testable.
+    """
+
+    global embedding_model, sentiment_analyzer
+
+    load_knowledge_base()
+
+    # Load the embedding model. On first run this will download model weights
+    # (if not already cached) which may take several seconds.
+    embedding_model = SentenceTransformer(embedding_model_name)
+
+    # Initialize a default sentiment-analysis pipeline. The model used is the
+    # default for the installed transformers version; teams can pass a model
+    # name to pipeline(...) if they need a different classifier.
+    sentiment_analyzer = pipeline("sentiment-analysis")
+
+    # Pre-compute embeddings so retrieval is fast in the chat loop.
+    generate_embeddings()
+
+
+def main():
+    """Entry point when running the script as a program.
+
+    Usage:
+        python support_assistant.py [path/to/knowledge_base.csv]
+
+    If a command-line argument is provided it is used as the KB path; this
+    allows running against a different CSV without editing the file.
+    """
+
+    global knowledge_base_path
+
+    if len(sys.argv) > 1:
+        knowledge_base_path = sys.argv[1]
+
+    setup_assistant()
+    chat()
 
 
 if __name__ == "__main__":
