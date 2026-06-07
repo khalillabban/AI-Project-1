@@ -1,15 +1,30 @@
 Welcome to Student Support AI
 Type 'quit' to exit.
-You: I cannot access my account and this is terrible
-Sentiment: NEGATIVE (0.99)
+You: I cannot access my acount and this is terrible
+Sentiment: NEGATIVE (0.93)
 Recommended escalation: Contact human advisor.
 Answer: Try resetting your password through the IT portal. If the issue continues, contact technical support for account recovery.
 Matched knowledge-base question: What should I do if I cannot access my account?
-Semantic similarity: 0.78
+Semantic similarity: 0.69
 You: Where is the registrar office?
-Sentiment: NEUTRAL (0.98)
+Sentiment: NEUTRAL (0.95)
 Answer: The registrar office is located in Building A room 210. Check the student portal for current service hours.
 Matched knowledge-base question: Where is the registrar office?
 Semantic similarity: 1.00
+You: How do I pay tuition?
+Sentiment: NEUTRAL (0.83)
+Answer: Tuition can be paid online through the finance portal using the payment section of your student account.
+Matched knowledge-base question: How do I pay tuition?
+Semantic similarity: 1.00
+You: Where is my student ID card?
+Sentiment: NEUTRAL (0.62)
+Answer: Student ID cards are issued at the campus card office. Bring a government ID and your student number.
+Matched knowledge-base question: Where can I get my student ID card?
+Semantic similarity: 0.91
+You: Thank you!
+Sentiment: POSITIVE (0.94)
+Answer: Exam schedules are posted in the student portal under the exams section once they are released.
+Matched knowledge-base question: Where can I find exam schedules?
+Semantic similarity: 0.12
 You: quit
 Goodbye!

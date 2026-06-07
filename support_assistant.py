@@ -62,7 +62,7 @@ def generate_embeddings():
     global question_embeddings
 
     # The model's `encode` returns a ndarray of shape (n_questions, dim).
-    question_embeddings = embedding_model.encode(questions)
+    question_embeddings = embedding_model.encode(questions) 
 
 
 def retrieve_answer(user_query):

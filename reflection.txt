@@ -4,19 +4,9 @@ Team Members
 1. Zachary Corber (40246724)
 2. Khalil Al Labban (40282892)
 
-Difficulties Faced and How We Overcame Them
-One difficulty was understanding sentence embeddings and how semantic search differs from keyword search. We overcame this by testing different student questions and checking whether the assistant retrieved the closest answer from the knowledge base.
+Difficulties Faced and How We Overcame Them:
+- One difficulty was understanding sentence embeddings and how semantic search differs from keyword search. We overcame this by testing different student questions and checking whether the assistant retrieved the closest answer from the knowledge base.
+- Another difficulty was setting up the required Python libraries. We solved this by creating a requirements.txt file and using a virtual environment.
 
-Another difficulty was setting up the required Python libraries. We solved this by creating a requirements.txt file and using a virtual environment.
-
-Time Spent
-- Understanding embeddings: ____ hour(s)
-- Environment setup: ____ hour(s)
-- Python coding and structure: ____ hour(s)
-- Semantic search implementation: ____ hour(s)
-- Sentiment analysis implementation: ____ hour(s)
-- Conversation loop: ____ hour(s)
-- Testing and debugging: ____ hour(s)
-
-What We Learned
+What We Learned:
 We learned how to combine NLP, embeddings, semantic similarity, sentiment analysis, and basic Python software engineering to build a small AI-powered support assistant.
