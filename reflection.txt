@@ -56,7 +56,7 @@ Implementing escalation logic for strongly negative sentiment: 30 minutes
 Building the interactive conversation loop: 20 minutes
 Formatting the command-line output and adding matched-question/similarity information: 20 minutes
 Testing direct matches, similar questions, misspelled questions, negative messages, and quit behavior: 1 hour
-Writing documentation, sample output, and reflection content:1 hour
+Writing documentation, sample output, and reflection content: 1 hour
 
 Total actual time: ~ 8.5 hours
 
