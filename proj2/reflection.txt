@@ -1,0 +1,22 @@
+Team Members and Contributions:
+
+1. Zachary Corber (40246724)
+- Feature extractions
+- Machine Learning Model training
+- Confidence Score System
+- Interactive Prediction System
+- Testing and demo prep
+
+
+2. Khalil Al Labban (40282892)
+- Dataset loading and cleaning
+- Model evaluation
+- Data Visualization
+- Code organization
+- Testing and demo prep
+
+Difficulties Faced and How We Overcame Them:
+
+Actual Time Spent:
+
+What We Learned:
