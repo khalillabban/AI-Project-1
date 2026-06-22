@@ -13,18 +13,18 @@ class SpamDetectorAI:
         self.dataset_path = dataset_path
         self.data = None
         self.vectorizer = TfidfVectorizer()
+        #Using Logistic Regression
         self.model = LogisticRegression(max_iter=1000, class_weight="balanced") #since so many more ham than spam messages, we need to balance the classes to prevent bias toward ham
 
     def load_dataset(self):
         try:
             self.data = pd.read_csv(self.dataset_path, encoding="latin-1")
 
-            self.data = self.data.iloc[:, 0:2]
+            self.data = self.data.iloc[:, 0:2] #removing extra columns
             self.data.columns = ["label", "message"]
-            self.data = self.data.dropna()
+            self.data = self.data.dropna() #dropping null entries, if any
 
             print("Dataset loaded successfully.")
-            print(self.data.head())
 
         except FileNotFoundError:
             print("Error: Dataset file not found.")
@@ -34,6 +34,7 @@ class SpamDetectorAI:
             print("Error loading dataset:", e)
             exit()
 
+    #creating the visualization of the dataset, showing the distribution of spam vs ham messages
     def show_data_chart(self):
         counts = self.data["label"].value_counts()
 
