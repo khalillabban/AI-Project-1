@@ -1,22 +1,74 @@
+COMP 472 Mini Project 2 Reflection
+
 Team Members and Contributions:
 
 1. Zachary Corber (40246724)
-- Feature extractions
-- Machine Learning Model training
-- Confidence Score System
-- Interactive Prediction System
-- Testing and demo prep
+   - Feature extraction
+   - Machine learning model training
+   - Confidence score system
+   - Interactive prediction system
+   - Testing and demo preparation
 
+I contributed mainly to the feature extraction, model training, prediction, and interactive parts of the spam detection system. I helped research and understand how email text can be converted into numerical features using TfidfVectorizer. Since computers cannot directly learn from raw words, I worked on transforming the email messages into TF-IDF vectors so that the classifier could detect patterns in spam and ham messages.
+
+I also helped implement and test the machine learning model. The project uses Logistic Regression with class_weight="balanced" and max_iter=1000. The balanced class weight was added because the dataset contains many more ham messages than spam messages, so the model could otherwise become biased toward predicting ham too often. I helped connect the TF-IDF feature extraction output to the Logistic Regression classifier and trained the model using the training portion of the dataset.
+
+I contributed to the prediction and confidence score system. After the model predicts whether a message is spam or ham, the program also uses predict_proba to display the confidence level of the prediction. This made the output more useful because the user can see not only the predicted label, but also how certain the model is.
+
+I also helped build and test the interactive prediction loop. The loop continuously asks the user to enter a message, predicts whether the message is spam or ham, displays the confidence score, handles empty input, and exits when the user types quit. I tested the program with obvious spam messages, normal school/work messages, empty inputs, and the quit command to make sure the demo would run smoothly.
 
 2. Khalil Al Labban (40282892)
-- Dataset loading and cleaning
-- Model evaluation
-- Data Visualization
-- Code organization
-- Testing and demo prep
+   - Dataset loading and cleaning
+   - Model evaluation
+   - Data visualization
+   - Code organization
+   - Testing and demo preparation
+
+I contributed mainly to the dataset loading, data cleaning, evaluation, visualization, and organization of the project. I helped implement the load_dataset function using pandas to read the spam.csv file. Since the SMS Spam Collection dataset may contain extra columns depending on formatting, I helped clean the dataset by keeping only the first two columns, renaming them to label and message, and removing missing values. I also added error handling so the program gives a clear message if the dataset file is missing or cannot be loaded.
+
+I worked on the model evaluation part of the project. After the model is trained, the program predicts labels for the test set and displays the accuracy, confusion matrix, and classification report. This helped us measure how well the spam detector performs instead of only checking a few manual examples. The confusion matrix was especially useful because it showed how many spam and ham messages were classified correctly or incorrectly.
+
+I also contributed to the data visualization component. I helped create a bar chart showing the number of spam and ham messages in the dataset using matplotlib. The chart is saved as spam_chart.png, which helps show the class imbalance in the dataset visually. This also connects to why we used class_weight="balanced" in the Logistic Regression model.
+
+In addition, I helped organize the program using an object-oriented structure with the SpamDetectorAI class. This made the code easier to understand and explain during the demo because each responsibility is separated into a clear method: loading the dataset, generating the chart, training the model, predicting messages, and running the interactive loop. I also helped test the program against the assignment requirements and prepared the final files for submission, including the source code, chart, requirements file, and reflection.
 
 Difficulties Faced and How We Overcame Them:
 
+One difficulty we faced was understanding how text can be used in a machine learning model. At first, it was not obvious how a sentence like "Win a FREE iPhone today!" could be processed mathematically. We overcame this by learning how TfidfVectorizer converts text into numerical features based on word importance. Once the messages were converted into TF-IDF vectors, the classifier was able to learn patterns that often appear in spam messages.
+
+Another difficulty was dealing with the format of the dataset. The dataset did not behave like a perfectly clean two-column file at first, so we had to make sure the program only used the label and message columns. We solved this by selecting the first two columns, renaming them clearly, and dropping missing values. We also added exception handling so the program would not crash without explanation if the CSV file was missing or incorrectly formatted.
+
+We also noticed that the dataset has many more ham messages than spam messages. This made us think about model bias, because a classifier could get a high accuracy by mostly predicting ham. We addressed this by using class_weight="balanced" in Logistic Regression so that spam examples had a stronger influence during training.
+
+Another challenge was understanding the confusion matrix and classification report. Accuracy alone was easy to understand, but it did not fully show what types of mistakes the model was making. We overcame this by testing different messages and comparing the accuracy, confusion matrix, precision, recall, and f1-score so we could better understand the model’s performance.
+
+We also had to make sure the interactive prediction loop was reliable for the demo. For example, the program needed to handle empty input and quit cleanly. We solved this by checking whether the user input was blank and by ending the loop when the user typed quit.
+
 Actual Time Spent:
 
+Understanding the project requirements: 30 minutes
+Understanding spam classification and supervised learning: 45 minutes
+Understanding TF-IDF feature extraction: 1 hour
+Environment setup and installing libraries: 30 minutes
+Loading and cleaning the dataset with pandas: 45 minutes
+Implementing TF-IDF vectorization: 45 minutes
+Training the Logistic Regression model: 45 minutes
+Adding class balancing to reduce bias toward ham: 20 minutes
+Implementing accuracy, confusion matrix, and classification report: 45 minutes
+Creating the spam vs ham bar chart: 30 minutes
+Implementing prediction and confidence scores: 40 minutes
+Building the interactive prediction loop: 30 minutes
+Testing spam, ham, empty input, and quit behavior: 1 hour
+Writing documentation and reflection: 1 hour
+
+Total actual time: approximately 8.5 hours
+
 What We Learned:
+
+Through this project, we learned how a simple AI system can be built using supervised learning. We learned that a classifier needs labeled examples, where each message has a correct output label such as spam or ham. The model then learns patterns from the training data and is tested on data it has not seen before.
+
+We learned that text classification requires feature extraction because machine learning models cannot directly understand raw words. TF-IDF helped convert each message into numerical values that represent the importance of words in the dataset. This was one of the most important concepts in the project because it connected natural language text to machine learning.
+
+We also learned how to train and evaluate a model using scikit-learn. Logistic Regression was useful because it could classify messages and also provide probability values for confidence scores. The evaluation metrics helped us understand that accuracy is useful, but it is not the only important measurement. The confusion matrix and classification report gave us a clearer picture of the model’s strengths and weaknesses.
+
+Overall, this project helped us practice Python file handling, functions, object-oriented programming, error handling, working with datasets, basic data visualization, model training, and model evaluation. It also showed us that a useful spam detection AI system can be built with relatively little code when using libraries such as pandas, scikit-learn, and matplotlib.
